@@ -1,3 +1,4 @@
+const audioPlayer = document.getElementById('audio-player');
 document.addEventListener('DOMContentLoaded', () => {
   const registerUsernameInput = document.getElementById('register-username');
   const registerPasswordInput = document.getElementById('register-password');
@@ -140,11 +141,27 @@ document.addEventListener('DOMContentLoaded', () => {
   2. Manually place some audio and video files in it.
   3. For this function, you might hardcode the names of the files you've placed
   or, if your assessment allows, explore server-side solutions (which is likely beyond the scope
-  if you're focusing on Three.js and local storage).
-    
-  For now, let's hardcode some example media:*/
+  if you're focusing on Three.js and local storage).*/
+  
+  let currentPlaylist = [];
+  let currentTrackIndex = 0;
+
+  // --- Update loadAvailableMedia to only include .mp3 files (conceptual) ---
   function loadAvailableMedia() {
-    availableMedia = ['audio1.mp3', 'song.ogg', 'video.mp4', 'another_video.webm'];
+    availableMedia = [
+      '21 inst mix ab oz.mp3',
+      '1983 inst mix ab oz.mp3',
+      'after end inst mix ab oz.mp3',
+      'april 10 inst mix ab oz.mp3',
+      'ascending inst inst mix ab oz.mp3',
+      'drop straight inst mix ab oz.mp3',
+      'falling out of love inst mix ab oz.mp3',
+      'house i love inst mix ab oz.mp3',
+      'how the future dies inst mix ab oz.mp3',
+      'jul 31 17 inst mix ab oz.mp3',
+      'more than a song ab oz.mp3',
+      'ordinary inst mix ab oz.mp3'
+    ];
     displayAvailableMedia();
   }
 
@@ -154,6 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
     availableMedia.forEach(media => {
       const listItem = document.createElement('li');
       listItem.textContent = media;
+
       const addButton = document.createElement('button');
       addButton.textContent = 'Add to Playlist';
       addButton.addEventListener('click', () => {
@@ -170,6 +188,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
       listItem.appendChild(addButton);
+
+      const playSingleButton = document.createElement('button');
+      playSingleButton.textContent = 'Play';
+      playSingleButton.addEventListener('click', () => {
+        playTrack(`media/${media}`);
+      });
+      listItem.appendChild(playSingleButton);
+
       mediaList.appendChild(listItem);
     });
   }
@@ -177,27 +203,51 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Event listener for the "Play Playlist" button ---
   playPlaylistButton.addEventListener('click', () => {
     if (selectedPlaylistName && currentPlaylists[selectedPlaylistName].length > 0) {
-      // We'll implement the actual playback logic later
-      alert(`Playing playlist: ${selectedPlaylistName}`);
-      console.log('Playlist items:', currentPlaylists[selectedPlaylistName]);
-      // You would then proceed to play the first item in the
-      // currentPlaylists[selectedPlaylistName] array using the
-      // <audio> or <video> elements.
+      currentPlaylist = currentPlaylists[selectedPlaylistName];
+      currentTrackIndex = 0;
+      playCurrentTrackInPlaylist();
     } else {
       alert('No playlist selected or the playlist is empty.');
     }
   });
 
-  // --- Update UI based on login status ---
+  // --- Function to play a single track ---
+  function playTrack(filePath) {
+    audioPlayer.src = filePath;
+    audioPlayer.play();
+  }
+
+  // --- Function to play the current track in the playlist ---
+  function playCurrentTrackInPlaylist() {
+    if (currentPlaylist.length > 0 && currentTrackIndex < currentPlaylist.length) {
+      const trackName = currentPlaylist[currentTrackIndex];
+      playTrack(`media/${trackName}`);
+    } else {
+      alert('Playlist finished.');
+      currentPlaylist = [];
+      currentTrackIndex = 0;
+      playPlaylistButton.disabled = currentPlaylists[selectedPlaylistName]?.length === 0;
+    }
+  }
+
+  // --- Event listener for when the current track ends (for playlist playback) ---
+  audioPlayer.addEventListener('ended', () => {
+    if (currentPlaylist.length > 0) {
+      currentTrackIndex++;
+      playCurrentTrackInPlaylist();
+    }
+  });
+
+  // --- Update showApp function ---
   function showApp(username) {
     document.getElementById('registration-container').style.display = 'none';
     document.getElementById('login-container').style.display = 'none';
     appContainer.style.display = 'block';
     loggedInUserSpan.textContent = username;
-    loggedInUsername = username; // Update loggedInUsername
+    loggedInUsername = username;
     currentPlaylists = loadPlaylists(loggedInUsername);
     displayPlaylists();
-    loadAvailableMedia(); // Load the conceptual media list
+    loadAvailableMedia(); // Load the MP3 files
   }
 
   function logout() {
@@ -232,7 +282,66 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  
   // --- Check if a user is already logged in on page load ---
   checkLoggedInUser();
 });
+
+// --- Web Audio API Setup ---
+let audioContext;
+let analyser;
+let audioSource;
+let frequencyData;
+
+function initializeAudioAnalyser() {
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    audioSource = audioContext.createMediaElementSource(audioPlayer);
+    analyser = audioContext.createAnalyser();
+    audioSource.connect(analyser);
+    analyser.connect(audioContext.destination); // Connect analyser to output
+    analyser.fftSize = 256; // Adjust for more or less detail
+    frequencyData = new Uint8Array(analyser.frequencyBinCount);
+  }
+}
+
+// Call initializeAudioAnalyser when playback starts
+audioPlayer.addEventListener('play', initializeAudioAnalyser);
+
+// --- Three.js Audio Visualizer Setup ---
+const scene = new ThreeMFLoader.Scene();
+const camera = new Three.Core.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new Three.WebGLRenderer();
+renderer.setSize(window.innerWidth / 2, window.innerHeight / 2); // Adjust size as needed
+document.getElementById('app-container').appendChild(renderer.domElement);
+
+const geometry = new THREE.BoxGeometry(1, 1, 1);
+const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+const cube = new THREE.Mesh(geometry, material);
+scene.add(cube);
+
+camera.position.z = 5;
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  if (analyser) {
+    analyser.getByteFrequencyData(frequencyData);
+
+    // Example: Scale the cube's Y-axis based on the average frequency
+    let average = 0;
+    for (let i = 0; i < frequencyData.length; i++) {
+      average += frequencyData[i];
+    }
+    average /= frequencyData.length;
+    cube.scale.y = 1 + (average / 255) * 2; // Scale between 1 and 3
+
+    // We can add more sophisticated visualisations here based on frequencyData
+  }
+
+  cube.rotation.x += 0.01;
+  cube.rotation.y += 0.01;
+  
+  renderer.render(scene, camera);
+}
+
+animate();

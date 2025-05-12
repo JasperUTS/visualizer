@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Media Visualiser</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.161.0/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.161.0/examples/jsm/loaders/ThreeMFLoader.js"></script>
   </head>
 
   <body>
@@ -41,7 +43,7 @@
       </div>
 
       <h2>Media Library</h2>
-      <p>Place your media files (audio and video) in the <code>media</code> folder within the project directory.</p>
+      <p>Place your AUdio files in the <code>media</code> folder within the project directory.</p>
       <ul id="media-list">
       </ul>
 
@@ -49,6 +51,8 @@
       <ul id="current-playlist-items">
       </ul>
       <button id="play-playlist-button" disabled>Play Playlist</button>
+
+      <audio id="audio-player" controls></audio>
 
     </div>
 

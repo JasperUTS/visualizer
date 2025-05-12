@@ -307,41 +307,68 @@ function initializeAudioAnalyser() {
 // Call initializeAudioAnalyser when playback starts
 audioPlayer.addEventListener('play', initializeAudioAnalyser);
 
-// --- Three.js Audio Visualizer Setup ---
-const scene = new ThreeMFLoader.Scene();
-const camera = new Three.Core.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-const renderer = new Three.WebGLRenderer();
-renderer.setSize(window.innerWidth / 2, window.innerHeight / 2); // Adjust size as needed
-document.getElementById('app-container').appendChild(renderer.domElement);
+document.addEventListener('DOMContentLoaded', () => {
+  // --- Web Audio API Setup ---
+  let audioContext;
+  let analyser;
+  let audioSource;
+  let frequencyData;
 
-const geometry = new THREE.BoxGeometry(1, 1, 1);
-const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-const cube = new THREE.Mesh(geometry, material);
-scene.add(cube);
-
-camera.position.z = 5;
-
-function animate() {
-  requestAnimationFrame(animate);
-
-  if (analyser) {
-    analyser.getByteFrequencyData(frequencyData);
-
-    // Example: Scale the cube's Y-axis based on the average frequency
-    let average = 0;
-    for (let i = 0; i < frequencyData.length; i++) {
-      average += frequencyData[i];
+function initializeAudioAnalyser() {
+    if (!audioContext) {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      audioSource = audioContext.createMediaElementSource(audioPlayer);
+      analyser = audioContext.createAnalyser();
+      audioSource.connect(analyser);
+      analyser.connect(audioContext.destination); // Connect analyser to output
+      analyser.fftSize = 256; // Adjust for more or less detail
+      frequencyData = new Uint8Array(analyser.frequencyBinCount);
     }
-    average /= frequencyData.length;
-    cube.scale.y = 1 + (average / 255) * 2; // Scale between 1 and 3
-
-    // We can add more sophisticated visualisations here based on frequencyData
+    if (audioContext.state === 'suspended') {
+      audioContext.resume();
+    }
+    audioPlayer.volume = 1.0;
   }
 
-  cube.rotation.x += 0.01;
-  cube.rotation.y += 0.01;
-  
-  renderer.render(scene, camera);
-}
+  // Call initializeAudioAnalyser when playback starts
+  audioPlayer.addEventListener('play', initializeAudioAnalyser);
 
-animate();
+  // --- Three.js Audio Visualizer Setup ---
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  const renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth / 2, window.innerHeight / 2); // Adjust size as needed
+  document.getElementById('app-container').appendChild(renderer.domElement);
+
+  const geometry = new THREE.BoxGeometry(1, 1, 1);
+  const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+  const cube = new THREE.Mesh(geometry, material);
+  scene.add(cube);
+
+  camera.position.z = 5;
+
+  function animate() {
+    requestAnimationFrame(animate);
+
+    if (analyser) {
+      analyser.getByteFrequencyData(frequencyData);
+
+      // Example: Scale the cube's Y-axis based on the average frequency
+      let average = 0;
+      for (let i = 0; i < frequencyData.length; i++) {
+        average += frequencyData[i];
+      }
+      average /= frequencyData.length;
+      cube.scale.y = 1 + (average / 255) * 2; // Scale between 1 and 3
+
+      // We can add more sophisticated visualisations here based on frequencyData
+    }
+
+    cube.rotation.x += 0.01;
+    cube.rotation.y += 0.01;
+    
+    renderer.render(scene, camera);
+  }
+
+  animate();
+});

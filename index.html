@@ -41,7 +41,7 @@
       </div>
 
       <h2>Media Library</h2>
-      <p>Place your AUdio files in the <code>media</code> folder within the project directory.</p>
+      <p>Place your Audio files in the <code>media</code> folder within the project directory.</p>
       <ul id="media-list">
       </ul>
 
@@ -51,7 +51,10 @@
       <button id="play-playlist-button" disabled>Play Playlist</button>
 
       <audio id="audio-player" controls></audio>
-
+      <div id="skip-controls">
+        <button id="skip-previous-button">Skip to Previous</button>
+        <button id="skip-next-button">Skip to Next</button>
+      </div>
     </div>
 
     <script src="https://unpkg.com/three@0.161.0/build/three.min.js" defer></script>

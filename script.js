@@ -238,6 +238,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // --- Skip to Next Track ---
+  const skipNextButton = document.getElementById('skip-next-button');
+  skipNextButton.addEventListener('click', () => {
+    if (currentPlaylist.length > 0 && currentTrackIndex < currentPlaylist.length - 1) {
+      currentTrackIndex++;
+      playCurrentTrackInPlaylist();
+    }
+  });
+
+  // --- Skip to Previous Track ---
+  const skipPreviousButton = document.getElementById('skip-previous-button');
+  skipPreviousButton.addEventListener('click', () => {
+    if (currentPlaylist.length > 0 && currentTrackIndex > 0) {
+      currentTrackIndex--;
+      playCurrentTrackInPlaylist();
+    }
+  });
+
   // --- Update showApp function ---
   function showApp(username) {
     document.getElementById('registration-container').style.display = 'none';
@@ -258,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('login-container').style.display = 'block';
     loggedInUserSpan.textContent = '';
     loggedInUsername = null;
-    currentPlaylist = {};
+    currentPlaylist = [];
     playlistList.innerHTML = '';
     currentPlaylistItems.innerHTML = '';
     selectedPlaylistName = null;

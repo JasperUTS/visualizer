@@ -1,59 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Media Visualiser</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css" />
   </head>
 
   <body>
-    <div id="registration-container">
-      <h2>Register</h2>
-      <label for="register-username">Username:</label>
-      <input type="text" id="register-username" required><br><br>
-      <label for="register-password">Password:</label>
-      <input type="password" id="register-password" required><br><br>
-      <button id="register-button">Register</button>
-      <p id="registration-message"></p>
-    </div>
-
-    <div id="login-container">
-      <h2>Login</h2>
-      <label for="login-username">Username:</label>
-      <input type="text" id="login-username" required><br><br>
-      <label for="login-password">Password:</label>
-      <input type="password" id="login-password" required><br><br>
-      <button id="login-button">Login</button>
-      <p id="login-message"></p>
-    </div>
-
-    <div id="app-container" style="display: none;">
-      <h1>Welcome, <span id="logged-in-user"></span>!</h1>
-      <button id="logout-button">Logout</button>
-
-      <h2>Playlists</h2>
-      <div id="playlist-management">
-        <input type="text" id="new-playlist-name" placeholder="New playlist name">
-        <button id="create-playlist-button">Create Playlist</button>
-        <ul id="playlist-list">
-        </ul>
+    <div id="border-container">
+      <!-- Dropdown toggle buttons -->
+      <div id="dropdown-toggles">
+        <button class="dropdown-toggle" data-target="register-dropdown">Register</button>
+        <button class="dropdown-toggle" data-target="login-dropdown">Login</button>
+        <button class="dropdown-toggle" data-target="playlist-dropdown">Playlists</button>
+        <button class="dropdown-toggle" data-target="media-dropdown">Media Library</button>
+        <!-- Removed audio player toggle button as it will be always visible -->
       </div>
 
-      <h2>Media Library</h2>
-      <p>Place your Audio files in the <code>media</code> folder within the project directory.</p>
-      <ul id="media-list">
-      </ul>
+      <!-- Register dropdown -->
+      <div id="register-dropdown" class="dropdown-container">
+        <div id="registration-container">
+          <h2>Register</h2>
+          <label for="register-username">Username:</label>
+          <input type="text" id="register-username" required /><br /><br />
+          <label for="register-password">Password:</label>
+          <input type="password" id="register-password" required /><br /><br />
+          <button id="register-button">Register</button>
+          <p id="registration-message"></p>
+        </div>
+      </div>
 
-      <h2>Current Playlist</h2>
-      <ul id="current-playlist-items">
-      </ul>
-      <button id="play-playlist-button" disabled>Play Playlist</button>
+      <!-- Login dropdown -->
+      <div id="login-dropdown" class="dropdown-container">
+        <div id="login-container">
+          <h2>Login</h2>
+          <label for="login-username">Username:</label>
+          <input type="text" id="login-username" required /><br /><br />
+          <label for="login-password">Password:</label>
+          <input type="password" id="login-password" required /><br /><br />
+          <button id="login-button">Login</button>
+          <p id="login-message"></p>
+        </div>
+      </div>
 
-      <audio id="audio-player" controls></audio>
-      <div id="skip-controls">
-        <button id="skip-previous-button">Skip to Previous</button>
-        <button id="skip-next-button">Skip to Next</button>
+      <!-- App container -->
+      <div id="app-container" style="display: none;">
+        <h1>Welcome, <span id="logged-in-user"></span>!</h1>
+        <button id="logout-button">Logout</button>
+
+        <!-- Playlist dropdown -->
+        <div id="playlist-dropdown" class="dropdown-container">
+          <h2>Playlists</h2>
+          <div id="playlist-management">
+            <input
+              type="text"
+              id="new-playlist-name"
+              placeholder="New playlist name"
+            />
+            <button id="create-playlist-button">Create Playlist</button>
+            <ul id="playlist-list"></ul>
+          </div>
+          <h2>Current Playlist</h2>
+          <ul id="current-playlist-items"></ul>
+          <button id="play-playlist-button" disabled>Play Playlist</button>
+        </div>
+
+        <!-- Media library dropdown -->
+        <div id="media-dropdown" class="dropdown-container">
+          <h2>Media Library</h2>
+          <p>
+            Place your Audio files in the <code>media</code> folder within the
+            project directory.
+          </p>
+          <ul id="media-list"></ul>
+        </div>
+
+        <!-- Player wrapper containing now playing and audio player -->
+        <div id="player-wrapper">
+          <!-- Now playing container above audio player -->
+          <div id="now-playing">Now Playing: <span id="now-playing-title">None</span></div>
+
+          <!-- Audio player controls at top center -->
+          <div id="audio-player-container">
+            <button id="skip-previous-button" class="skip-button">Skip to Previous</button>
+            <audio id="audio-player" controls></audio>
+            <button id="skip-next-button" class="skip-button">Skip to Next</button>
+          </div>
+        </div>
       </div>
     </div>
 

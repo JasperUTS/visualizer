@@ -1,220 +1,308 @@
-/* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 body {
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    background: whitesmoke;
-    font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.8);;
+  font-family: Arial, sans-serif;
 }
 
-.container {
-    position: relative;
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
+#border-container {
+  position: relative;
+  background: whitesmoke;
+  margin: 155px 40px 55px 40px; /* top 70px to be below audio player, right 40px, bottom 50px, left 40px */
+  border: 10px lightgray;
+  border-radius: 10px;
+  border-style: inset;
+  height: calc(90vh - 120px); /* subtract top margin + bottom dropdown height */
+  box-sizing: border-box;
+  overflow: auto;
 }
 
-#canvas-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
+/* Dropdown toggle buttons container */
+#dropdown-toggles {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 10px 20px;
+  border-radius: 10px 10px 0 0;
+  z-index: 1000;
 }
 
-.controls {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.7);
-    padding: 20px;
-    border-radius: 10px;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    min-width: 300px;
+/* Player wrapper to contain now playing and audio player */
+#player-wrapper {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40%;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1002;
 }
 
-.control-group {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
+/* Remove fixed positioning from now playing and audio player containers */
+#now-playing,
+#audio-player-container {
+  position: static;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.control-group label {
-    color: #fff;
-    font-size: 14px;
+/* Now playing container styles */
+#now-playing {
+  background: white;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border-style: groove;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+  font-size: 16px;
+  color: #333;
+  text-align: center;
+  min-width: auto;
+  z-index: 1003;
 }
 
-.control-group select {
-    padding: 8px;
-    border-radius: 5px;
-    border: 1px solid #444;
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-    font-size: 14px;
+/* Audio player container styles */
+#audio-player-container {
+  background: white;
+  padding: 15px 25px;
+  border-radius: 10px;
+  border-style: groove;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: nowrap;
+  z-index: 1001;
 }
 
-.control-group button {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 5px;
-    background: #4CAF50;
-    color: white;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background 0.3s;
+/* Skip buttons on either side */
+.skip-button {
+  background-color: #4caf50;
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-size: 14px;
 }
 
-.control-group button:hover {
-    background: #45a049;
+.skip-button:hover {
+  background-color: #45a049;
 }
 
-.progress-container {
-    width: 100%;
-    height: 20px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    overflow: hidden;
-    position: relative;
+/* Audio player element */
+#audio-player {
+  flex-grow: 1;
+  max-width: 400px;
 }
 
-.progress {
-    position: absolute;
-    left: 0;
-    top: 0;
-    height: 100%;
-    background: #4CAF50;
-    width: 0%;
-    transition: width 0.1s linear;
+/* Now playing container */
+#now-playing {
+  background: #f0f0f0;
+  padding: 8px 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+  font-size: 16px;
+  color: #333;
+  text-align: center;
+  min-width: auto;
+  z-index: 1003;
+  position: static;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.time-display {
-    position: absolute;
-    top: -20px;
-    left: 0;
-    color: #fff;
-    font-size: 12px;
+#skip-controls {
+  display: flex;
+  gap: 10px;
 }
 
-.controls-row {
-    display: flex;
-    gap: 20px;
-    align-items: center;
+#skip-controls button {
+  padding: 8px 16px;
+  background-color: #4caf50;
+  border: none;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
-.file-upload {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+#skip-controls button:hover {
+  background-color: #45a049;
 }
 
-.file-upload label {
-    padding: 10px 20px;
-    background-color: #4CAF50;
-    color: white;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: all 0.3s ease;
-    font-size: 14px;
-    display: inline-block;
-    text-align: center;
+/* Dropdown toggle buttons */
+.dropdown-toggle {
+  background-color: #4caf50;
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 5px 5px 0 0;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
-.file-upload label:hover {
-    background-color: #45a049;
+.dropdown-toggle:hover {
+  background-color: #45a049;
 }
 
-input[type="file"] {
-    display: none;
+/* Dropdown container styles */
+.dropdown-container {
+  position: fixed;
+  bottom: 50px; /* raise above toggle buttons */
+  left: 50%;
+  transform: translateX(-50%) translateY(100%);
+  width: 90%;
+  max-width: 400px;
+  background: white;
+  border-radius: 10px 10px 0 0;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  z-index: 999;
+  transition: transform 0.3s ease;
+  overflow-y: auto;
+  max-height: 60vh; /* increased height */
+  color: black;
+  display: none;
 }
 
-#audio-input + label {
-    padding: 10px 20px;
-    background-color: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: white;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: all 0.3s ease;
-    font-size: 14px;
+/* Show dropdown container */
+.dropdown-container.active {
+  display: block;
+  transform: translateX(-50%) translateY(0);
 }
 
-#audio-input + label:hover {
-    background-color: rgba(255, 255, 255, 0.3);
+/* Scrollbar styling for dropdown */
+.dropdown-container::-webkit-scrollbar {
+  width: 6px;
 }
 
-.track-controls {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
+.dropdown-container::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
 }
 
-.track-controls button {
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    min-width: unset;
+/* Style inputs and buttons inside dropdown */
+.dropdown-container input[type="text"],
+.dropdown-container input[type="password"] {
+  width: 100%;
+  padding: 8px;
+  margin: 6px 0 12px 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-sizing: border-box;
 }
 
-select {
-    padding: 10px 20px;
-    background-color: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: white;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: all 0.3s ease;
-    font-size: 14px;
-    min-width: 150px;
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 20px;
+.dropdown-container button {
+  width: 100%;
+  padding: 10px;
+  background-color: #4caf50;
+  border: none;
+  color: white;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
-select:hover {
-    background-color: rgba(255, 255, 255, 0.3);
+.dropdown-container button:hover {
+  background-color: #45a049;
 }
 
-select:focus {
-    outline: none;
-    border-color: rgba(255, 255, 255, 0.5);
+/* Style lists inside dropdown */
+.dropdown-container ul {
+  list-style: none;
+  padding-left: 0;
+  max-height: 150px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
 }
 
-button {
-    padding: 10px 20px;
-    background-color: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: white;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: all 0.3s ease;
-    font-size: 14px;
-    min-width: 80px;
-    text-align: center;
+.dropdown-container ul li {
+  padding: 8px 12px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-button:hover {
-    background-color: rgba(255, 255, 255, 0.3);
+.dropdown-container ul li:last-child {
+  border-bottom: none;
 }
 
-button:active {
-    transform: scale(0.95);
-} */
+.dropdown-container ul li button {
+  width: auto;
+  padding: 5px 10px;
+  font-size: 12px;
+  background-color: #2196f3;
+  border-radius: 3px;
+}
+
+.dropdown-container ul li button:hover {
+  background-color: #1976d2;
+}
+
+/* New styles to move welcome message and logout button to top right corner */
+#app-container {
+  position: fixed;
+  top: 10px;
+  right: 20px;
+  z-index: 1100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 8px 15px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+  width: 320px;
+}
+
+#app-container h1 {
+  font-size: 36px;
+  font-weight: normal;
+  margin: 0;
+  color: #333;
+  flex-grow: 1;
+  display: block;
+  width: auto;
+}
+
+#logout-button {
+  display: block;
+  width: auto;
+}
+
+#logout-button {
+  background-color: #f44336;
+  float: right;
+  border: none;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+#logout-button:hover {
+  background-color: #d32f2f;
+}

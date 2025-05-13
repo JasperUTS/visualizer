@@ -1,3 +1,6 @@
+
+
+
 const audioPlayer = document.getElementById('audio-player');
 document.addEventListener('DOMContentLoaded', () => {
   const registerUsernameInput = document.getElementById('register-username');
@@ -14,51 +17,143 @@ document.addEventListener('DOMContentLoaded', () => {
   const loggedInUserSpan = document.getElementById('logged-in-user');
   const logoutButton = document.getElementById('logout-button');
 
+  // Dropdown toggle buttons and containers
+  const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+  const dropdownContainers = document.querySelectorAll('.dropdown-container');
+
+  // Function to hide all dropdowns
+  function hideAllDropdowns() {
+    dropdownContainers.forEach(container => {
+      container.classList.remove('active');
+    });
+  }
+
+  // Add event listeners to toggle buttons
+  dropdownToggles.forEach(button => {
+    button.addEventListener('click', () => {
+      const targetId = button.getAttribute('data-target');
+      const targetDropdown = document.getElementById(targetId);
+      if (targetDropdown.classList.contains('active')) {
+        targetDropdown.classList.remove('active');
+      } else {
+        hideAllDropdowns();
+        targetDropdown.classList.add('active');
+      }
+    });
+  });
+
+  // Function to toggle visibility of Register and Login buttons before and after login
+  function toggleDropdownButtons(isLoggedIn) {
+    dropdownToggles.forEach(button => {
+      const targetId = button.getAttribute('data-target');
+      if (targetId === 'register-dropdown' || targetId === 'login-dropdown') {
+        button.style.display = isLoggedIn ? 'none' : 'inline-block';
+      } else {
+        button.style.display = isLoggedIn ? 'inline-block' : 'none';
+      }
+    });
+  }
+
   // --- Registration ---
   registerButton.addEventListener('click', () => {
-      const username = registerUsernameInput.value.trim();
-      const password = registerPasswordInput.value;
+    const username = registerUsernameInput.value.trim();
+    const password = registerPasswordInput.value;
 
-      if (username && password) {
-          const existingUser = localStorage.getItem(username);
-          if (existingUser) {
-              registrationMessage.textContent = 'Username already exists.';
-          } else {
-              // For simplicity, we'll store the password directly.
-              // In a real application, you would hash the password.
-              localStorage.setItem(username, password);
-              registrationMessage.textContent = 'Registration successful. You can now log in.';
-              registerUsernameInput.value = '';
-              registerPasswordInput.value = '';
-          }
+    if (username && password) {
+      const existingUser = localStorage.getItem(username);
+      if (existingUser) {
+        registrationMessage.textContent = 'Username already exists.';
       } else {
-          registrationMessage.textContent = 'Please enter a username and password.';
+        // For simplicity, we'll store the password directly.
+        // In a real application, you would hash the password.
+        localStorage.setItem(username, password);
+        registrationMessage.textContent = 'Registration successful. You can now log in.';
+        registerUsernameInput.value = '';
+        registerPasswordInput.value = '';
       }
+    } else {
+      registrationMessage.textContent = 'Please enter a username and password.';
+    }
   });
 
   // --- Login ---
   loginButton.addEventListener('click', () => {
-      const username = loginUsernameInput.value.trim();
-      const password = loginPasswordInput.value;
+    const username = loginUsernameInput.value.trim();
+    const password = loginPasswordInput.value;
 
-      if (username && password) {
-          const storedPassword = localStorage.getItem(username);
-          if (storedPassword === password) {
-              loginMessage.textContent = 'Login successful.';
-              loginUsernameInput.value = '';
-              loginPasswordInput.value = '';
-              showApp(username);
-          } else {
-              loginMessage.textContent = 'Invalid username or password.';
-          }
+    if (username && password) {
+      const storedPassword = localStorage.getItem(username);
+      if (storedPassword === password) {
+        loginMessage.textContent = 'Login successful.';
+        loginUsernameInput.value = '';
+        loginPasswordInput.value = '';
+        showApp(username);
+        toggleDropdownButtons(true);
       } else {
-          loginMessage.textContent = 'Please enter your username and password.';
+        loginMessage.textContent = 'Invalid username or password.';
       }
+    } else {
+      loginMessage.textContent = 'Please enter your username and password.';
+    }
   });
 
   // --- Logout ---
   logoutButton.addEventListener('click', () => {
-      logout();
+    logout();
+    toggleDropdownButtons(false);
+  });
+
+  // --- Update showApp function ---
+  function showApp(username) {
+    document.getElementById('registration-container').style.display = 'none';
+    document.getElementById('login-container').style.display = 'none';
+    appContainer.style.display = 'block';
+    loggedInUserSpan.textContent = username;
+    loggedInUsername = username;
+    currentPlaylists = loadPlaylists(loggedInUsername);
+    displayPlaylists();
+    loadAvailableMedia(); // Load the MP3 files
+    toggleDropdownButtons(true);
+  }
+
+  function logout() {
+    /* For this simple implementation, we're just hiding the app UI.
+    In a more complex scenario, you might clear a session token.*/
+    appContainer.style.display = 'none';
+    document.getElementById('registration-container').style.display = 'block';
+    document.getElementById('login-container').style.display = 'block';
+    loggedInUserSpan.textContent = '';
+    loggedInUsername = null;
+    currentPlaylist = [];
+    playlistList.innerHTML = '';
+    currentPlaylistItems.innerHTML = '';
+    selectedPlaylistName = null;
+    playPlaylistButton.disabled = true;
+    toggleDropdownButtons(false);
+  }
+
+  function checkLoggedInUser() {
+    /* In this basic example, we're not maintaining a separate "session."
+    The user is considered "logged in" if their credentials are in localStorage.
+    A more robust approach would involve a session token.
+    For now, we'll just show the login/registration forms on initial load.*/
+    const storedUsername = localStorage.getItem('loggedInUser');
+    
+    if (storedUsername) {
+      showApp(storedUsername);
+      toggleDropdownButtons(true);
+    } else {
+      // Keep login/registration visible by default
+      document.getElementById('registration-container').style.display = 'block';
+      document.getElementById('login-container').style.display = 'block';
+      appContainer.style.display = 'none';
+      toggleDropdownButtons(false);
+    }
+  }
+
+  // --- Logout ---
+  logoutButton.addEventListener('click', () => {
+    logout();
   });
 
   const newPlaylistNameInput = document.getElementById('new-playlist-name');
@@ -215,6 +310,14 @@ document.addEventListener('DOMContentLoaded', () => {
   function playTrack(filePath) {
     audioPlayer.src = filePath;
     audioPlayer.play();
+    // Update now playing title
+    const nowPlayingTitle = document.getElementById('now-playing-title');
+    if (nowPlayingTitle) {
+      // Extract filename from filePath
+      const parts = filePath.split('/');
+      const filename = parts[parts.length - 1];
+      nowPlayingTitle.textContent = filename;
+    }
   }
 
   // --- Function to play the current track in the playlist ---
@@ -266,6 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
     currentPlaylists = loadPlaylists(loggedInUsername);
     displayPlaylists();
     loadAvailableMedia(); // Load the MP3 files
+    toggleDropdownButtons(true);
   }
 
   function logout() {
@@ -281,6 +385,7 @@ document.addEventListener('DOMContentLoaded', () => {
     currentPlaylistItems.innerHTML = '';
     selectedPlaylistName = null;
     playPlaylistButton.disabled = true;
+    toggleDropdownButtons(false);
   }
 
   function checkLoggedInUser() {
@@ -292,11 +397,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (storedUsername) {
       showApp(storedUsername);
+      toggleDropdownButtons(true);
     } else {
       // Keep login/registration visible by default
       document.getElementById('registration-container').style.display = 'block';
       document.getElementById('login-container').style.display = 'block';
       appContainer.style.display = 'none';
+      toggleDropdownButtons(false);
     }
   }
 

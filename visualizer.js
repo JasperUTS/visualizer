@@ -162,16 +162,21 @@ class Visualizer {
         // Handle play/pause
         playPauseBtn.addEventListener('click', () => {
             initAudioContext();
-            if (!this.audioContext || !this.source) return;
+            if (!this.audioContext) return;
 
             if (this.isPlaying) {
-                this.source.stop();
+                if (this.source) {
+                    this.source.stop();
+                    this.source.disconnect();
+                    this.source = null;
+                }
                 this.isPlaying = false;
                 playPauseBtn.textContent = 'Play';
                 if (this.updateInterval) {
                     clearInterval(this.updateInterval);
                 }
             } else {
+                this.createSourceNode();
                 this.source.start(0);
                 this.startTime = this.audioContext.currentTime;
                 this.isPlaying = true;
@@ -256,10 +261,7 @@ class Visualizer {
         reader.onload = (event) => {
             this.audioContext.decodeAudioData(event.target.result, (buffer) => {
                 this.audioBuffer = buffer;
-                this.source = this.audioContext.createBufferSource();
-                this.source.buffer = this.audioBuffer;
-                this.source.connect(this.analyser);
-                this.analyser.connect(this.audioContext.destination);
+                this.createSourceNode();
                 this.isPlaying = false;
                 document.getElementById('play-pause').textContent = 'Play';
                 document.getElementById('total-time').textContent = this.formatTime(buffer.duration);
@@ -280,6 +282,7 @@ class Visualizer {
             this.currentTrackIndex = (this.currentTrackIndex + 1) % this.audioFiles.length;
             this.loadAudioFile(this.audioFiles[this.currentTrackIndex]);
             if (this.isPlaying) {
+                this.createSourceNode();
                 this.source.start(0);
                 this.startTime = this.audioContext.currentTime;
             }
@@ -295,6 +298,7 @@ class Visualizer {
             this.currentTrackIndex = (this.currentTrackIndex - 1 + this.audioFiles.length) % this.audioFiles.length;
             this.loadAudioFile(this.audioFiles[this.currentTrackIndex]);
             if (this.isPlaying) {
+                this.createSourceNode();
                 this.source.start(0);
                 this.startTime = this.audioContext.currentTime;
             }
@@ -1050,6 +1054,22 @@ class Visualizer {
         this.renderer.render(this.scene, this.camera);
     }
 }
+
+Visualizer.prototype.createSourceNode = function() {
+    if (this.source) {
+        try {
+            this.source.stop();
+        } catch (e) {
+            // Ignore if already stopped
+        }
+        this.source.disconnect();
+        this.source = null;
+    }
+    this.source = this.audioContext.createBufferSource();
+    this.source.buffer = this.audioBuffer;
+    this.source.connect(this.analyser);
+    this.analyser.connect(this.audioContext.destination);
+};
 
 export { Visualizer };
 

@@ -3,29 +3,35 @@
  * 
  * This class creates an interactive 3D audio visualizer using Three.js.
  * It supports multiple visualization styles and responds to audio input.
- */
+*/
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+//import { Raycaster } from 'three';
+//import { RGBELoader } from 'https://unpkg.com/three@0.161.0/examples/jsm/loaders/RGBELoader.js';
+
 class Visualizer {
     /**
      * Initialize the visualizer with default settings and properties
-     */
+    */
+
     constructor() {
         // Three.js scene setup
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.renderer = new THREE.WebGLRenderer({ antialias: true });
-        
+        this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true });
+
         // Audio processing properties
         this.audioContext = null;
         this.analyser = null;
         this.dataArray = new Uint8Array(128);
-        
+
         // Visualizer elements
         this.bars = [];
         this.particles = [];
         this.towers = [];
         this.groundPlane = null;
         this.cloudLayers = [];
-        
+
         // State management
         this.isPlaying = false;
         this.currentStyle = 'bars';
@@ -33,11 +39,11 @@ class Visualizer {
         this.currentTrackIndex = 0;
         this.currentTime = 0;
         this.updateInterval = null;
-        
+
         // Controls and timing
         this.orbitControls = null;
         this.clock = new THREE.Clock();
-        
+
         // Ink visualizer properties
         this.inkSystem = null;
         this.inkParticles = [];
@@ -45,7 +51,7 @@ class Visualizer {
         this.inkAges = [];
         this.paperTexture = null;
         this.inkTargets = [];
-        
+
         // Wave visualizer properties
         this.waveGeometry1 = null;
         this.waveGeometry2 = null;
@@ -58,7 +64,7 @@ class Visualizer {
         this.segmentSegments = 100;
         this.numSegments = 3;
         this.segmentSpacing = 150;
-        
+
         // Cloud control properties
         this.cloudSettings = {
             height: 10,
@@ -67,7 +73,7 @@ class Visualizer {
             audioReactivity: 0.2,
             threshold: 0.4
         };
-        
+
         // Initialize the visualizer
         this.init();
         this.setupControls();
@@ -77,12 +83,13 @@ class Visualizer {
 
     /**
      * Initialize the Three.js scene, camera, renderer, and lights
-     */
+    */
+
     init() {
         // Set up renderer
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(window.devicePixelRatio);
-        this.renderer.outputEncoding = THREE.sRGBEncoding;
+        this.renderer.outputColorSpace = THREE.SRGBColorSpace;
         document.getElementById('canvas-container').appendChild(this.renderer.domElement);
 
         // Set up camera
@@ -98,7 +105,7 @@ class Visualizer {
         this.scene.add(this.sunLight);
 
         // Set up orbit controls
-        this.orbitControls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+        this.orbitControls = new OrbitControls(this.camera, this.renderer.domElement);
         this.orbitControls.enableDamping = true;
         this.orbitControls.dampingFactor = 0.05;
         this.orbitControls.screenSpacePanning = false;
@@ -123,7 +130,8 @@ class Visualizer {
 
     /**
      * Set up event listeners for controls (play/pause, next/prev, file upload)
-     */
+    */
+
     setupControls() {
         const audioInput = document.getElementById('audio-input');
         const playPauseBtn = document.getElementById('play-pause');
@@ -155,7 +163,7 @@ class Visualizer {
         playPauseBtn.addEventListener('click', () => {
             initAudioContext();
             if (!this.audioContext || !this.source) return;
-            
+
             if (this.isPlaying) {
                 this.source.stop();
                 this.isPlaying = false;
@@ -202,7 +210,8 @@ class Visualizer {
 
     /**
      * Set up audio analyzer with appropriate settings
-     */
+    */
+
     setupAudio() {
         if (!this.analyser) return;
         this.analyser.fftSize = 256;
@@ -211,7 +220,8 @@ class Visualizer {
 
     /**
      * Format time in seconds to MM:SS format
-     */
+    */
+
     formatTime(seconds) {
         const minutes = Math.floor(seconds / 60);
         const remainingSeconds = Math.floor(seconds % 60);
@@ -220,14 +230,15 @@ class Visualizer {
 
     /**
      * Update the progress bar and time display
-     */
+    */
+
     updateProgress() {
         if (this.source && this.audioBuffer) {
             this.currentTime = this.audioContext.currentTime - this.startTime;
             const progress = (this.currentTime / this.audioBuffer.duration) * 100;
             document.querySelector('.progress').style.width = `${progress}%`;
             document.getElementById('current-time').textContent = this.formatTime(this.currentTime);
-            
+
             if (this.currentTime >= this.audioBuffer.duration) {
                 this.playNextTrack();
             }
@@ -236,10 +247,11 @@ class Visualizer {
 
     /**
      * Load and decode an audio file
-     */
+    */
+
     loadAudioFile(file) {
         if (!this.audioContext) return;
-        
+
         const reader = new FileReader();
         reader.onload = (event) => {
             this.audioContext.decodeAudioData(event.target.result, (buffer) => {
@@ -261,7 +273,8 @@ class Visualizer {
 
     /**
      * Play the next track in the playlist
-     */
+    */
+
     playNextTrack() {
         if (this.audioFiles.length > 0) {
             this.currentTrackIndex = (this.currentTrackIndex + 1) % this.audioFiles.length;
@@ -275,7 +288,8 @@ class Visualizer {
 
     /**
      * Play the previous track in the playlist
-     */
+    */
+
     playPreviousTrack() {
         if (this.audioFiles.length > 0) {
             this.currentTrackIndex = (this.currentTrackIndex - 1 + this.audioFiles.length) % this.audioFiles.length;
@@ -289,10 +303,11 @@ class Visualizer {
 
     /**
      * Create the current visualizer based on the selected style
-     */
+    */
+
     createVisualizer() {
         this.clearScene();
-        
+
         // Set up basic scene
         this.camera.position.set(0, 10, 20);
         this.camera.lookAt(0, 0, 0);
@@ -301,7 +316,7 @@ class Visualizer {
         this.orbitControls.target.set(0, 0, 0);
 
         // Create visualizer based on current style
-        switch(this.currentStyle) {
+        switch (this.currentStyle) {
             case 'bars':
                 this.createBars();
                 break;
@@ -327,18 +342,19 @@ class Visualizer {
 
     /**
      * Clean up the current visualizer before creating a new one
-     */
+    */
+
     clearScene() {
         // Remove all visualizer elements
         this.bars.forEach(bar => this.scene.remove(bar));
         this.particles.forEach(particle => this.scene.remove(particle));
         this.towers.forEach(tower => this.scene.remove(tower));
-        
+
         if (this.groundPlane) {
             this.scene.remove(this.groundPlane);
             this.groundPlane = null;
         }
-        
+
         // Remove cloud layers
         this.cloudLayers.forEach(layer => this.scene.remove(layer));
         this.cloudLayers = [];
@@ -352,7 +368,7 @@ class Visualizer {
         if (this.inkSystem) {
             this.scene.remove(this.inkSystem);
             this.inkSystem.geometry.dispose();
-            this.inkSystem.material.dispose(); 
+            this.inkSystem.material.dispose();
         }
         this.inkSystem = null;
         this.inkParticles = [];
@@ -408,7 +424,8 @@ class Visualizer {
     /**
      * Create the bars visualizer
      * Creates a set of vertical bars that react to audio frequencies
-     */
+    */
+
     createBars() {
         const barCount = 64;
         const barWidth = 0.2;
@@ -435,7 +452,8 @@ class Visualizer {
     /**
      * Create the points visualizer
      * Creates a sphere of points that react to audio with dynamic movement
-     */
+    */
+
     createPointsVisualizer() {
         // Create a large number of points
         const pointCount = 15000;
@@ -447,22 +465,22 @@ class Visualizer {
         const color = new THREE.Color();
         for (let i = 0; i < pointCount; i++) {
             const i3 = i * 3;
-            
+
             // Random positions in a sphere
             const radius = 50;
             const theta = Math.random() * Math.PI * 2;
             const phi = Math.acos(2 * Math.random() - 1);
-            
+
             positions[i3] = radius * Math.sin(phi) * Math.cos(theta);
             positions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
             positions[i3 + 2] = radius * Math.cos(phi);
-            
+
             // Random colors
             color.setHSL(Math.random(), 0.8, 0.5);
             colors[i3] = color.r;
             colors[i3 + 1] = color.g;
             colors[i3 + 2] = color.b;
-            
+
             // Random sizes
             sizes[i] = Math.random() * 2;
         }
@@ -541,14 +559,15 @@ class Visualizer {
     /**
      * Create the wave visualizer
      * Creates two layers of points that form a wave pattern reacting to audio
-     */
+    */
+
     createWaveVisualizer() {
         // Create a large grid of points
         const width = 200;
         const height = 100;
         const segments = 100;
         const pointCount = segments * segments;
-        
+
         // Create arrays for both layers
         const positions1 = new Float32Array(pointCount * 3);
         const positions2 = new Float32Array(pointCount * 3);
@@ -556,12 +575,12 @@ class Visualizer {
         const colors2 = new Float32Array(pointCount * 3);
         const sizes1 = new Float32Array(pointCount);
         const sizes2 = new Float32Array(pointCount);
-        
+
         // Initialize points for both layers
         for (let i = 0; i < segments; i++) {
             for (let j = 0; j < segments; j++) {
                 const index = (i * segments + j) * 3;
-                
+
                 // First layer (blue)
                 positions1[index] = (i - segments / 2) * (width / segments);
                 positions1[index + 1] = (j - segments / 2) * (height / segments);
@@ -570,7 +589,7 @@ class Visualizer {
                 colors1[index + 1] = 0.5;
                 colors1[index + 2] = 1.0;
                 sizes1[i * segments + j] = 1.0;
-                
+
                 // Second layer (purple/red) - slightly offset
                 positions2[index] = positions1[index] + 0.5;
                 positions2[index + 1] = positions1[index + 1] + 0.5;
@@ -670,22 +689,23 @@ class Visualizer {
     /**
      * Create the towers visualizer
      * Creates a grid of towers that react to audio with height and color changes
-     */
+    */
+
     createTowersVisualizer() {
         this.towers = [];
-        this.cloudLayers = []; 
+        this.cloudLayers = [];
 
         // Set up scene properties
         this.scene.fog = null;
-        this.scene.background = new THREE.Color(0x000000); 
+        this.scene.background = new THREE.Color(0x000000);
 
         // Configure grid settings
         const planeSize = 150;
         const viewDistance = 75;
         this.towerGridSettings = {
             gridSize: 20,
-            spacing: planeSize / 20, 
-            towerBaseSize: 2.0, 
+            spacing: planeSize / 20,
+            towerBaseSize: 2.0,
             baseTowerHeight: 0.1,
             planeSize: planeSize,
             wrapDistanceZ: viewDistance
@@ -694,26 +714,26 @@ class Visualizer {
 
         // Create ground plane
         const planeGeometry = new THREE.PlaneGeometry(gs.planeSize * 2, gs.planeSize * 2);
-        const planeMaterial = new THREE.MeshPhongMaterial({ 
-            color: 0x050508, 
+        const planeMaterial = new THREE.MeshPhongMaterial({
+            color: 0x050508,
             shininess: 50,
             specular: 0x111111
         });
         const plane = new THREE.Mesh(planeGeometry, planeMaterial);
         plane.rotation.x = -Math.PI / 2;
-        plane.position.y = -gs.baseTowerHeight / 2; 
+        plane.position.y = -gs.baseTowerHeight / 2;
         this.scene.add(plane);
-        this.groundPlane = plane; 
+        this.groundPlane = plane;
 
         // Create towers in a grid
         for (let x = 0; x < gs.gridSize; x++) {
             for (let z = 0; z < gs.gridSize * 2; z++) {
                 const geometry = new THREE.BoxGeometry(gs.towerBaseSize, gs.baseTowerHeight, gs.towerBaseSize);
-                const material = new THREE.MeshStandardMaterial({ 
-                    color: 0xffffff, 
+                const material = new THREE.MeshStandardMaterial({
+                    color: 0xffffff,
                     metalness: 0.1,
                     roughness: 0.6,
-                    emissive: 0xffffff, 
+                    emissive: 0xffffff,
                     emissiveIntensity: 0
                 });
                 const tower = new THREE.Mesh(geometry, material);
@@ -735,7 +755,8 @@ class Visualizer {
     /**
      * Update the towers visualizer
      * Animates towers based on audio frequencies and creates a treadmill effect
-     */
+    */
+
     updateTowersVisualizer(lowAvg, highAvg, delta) {
         if (!this.towerGridSettings) return;
 
@@ -746,7 +767,7 @@ class Visualizer {
 
         // Calculate average audio level for color changes
         let averageLevel = 0;
-        for(let i = 0; i < this.dataArray.length; i++) {
+        for (let i = 0; i < this.dataArray.length; i++) {
             averageLevel += this.dataArray[i] / 255.0;
         }
         averageLevel /= this.dataArray.length;
@@ -772,9 +793,9 @@ class Visualizer {
             const towerHue = (baseHue + value * 0.3) % 1.0;
             const saturation = 0.8 + value * 0.2;
             const lightness = 0.6 + value * 0.4;
-            
+
             tower.material.color.setHSL(towerHue, saturation, lightness);
-            
+
             // Emissive glow effect
             const emissiveHue = (towerHue + 0.5) % 1.0;
             tower.material.emissive.setHSL(emissiveHue, 0.8, 0.5);
@@ -783,25 +804,25 @@ class Visualizer {
 
         // Ground-level camera movement
         const time = this.clock.getElapsedTime();
-        
+
         // Set camera to ground level
         this.camera.position.y = 0.5;
-        
+
         // Move camera forward
         const forwardSpeed = 5.0 * delta;
         this.camera.position.z -= forwardSpeed;
-        
+
         // Add side-to-side movement
         const sideMovement = Math.sin(time * 0.5) * 2.0;
         this.camera.position.x = sideMovement;
-        
+
         // Look ahead and slightly upward
         this.camera.lookAt(
             sideMovement * 0.5,
             2.0,
             this.camera.position.z - 10
         );
-        
+
         // Reset camera position when it moves too far back
         if (this.camera.position.z < -50) {
             this.camera.position.z = 30;
@@ -811,10 +832,11 @@ class Visualizer {
     /**
      * Update the visualizer based on audio data
      * This is the main update loop that handles all visualizer animations
-     */
+    */
+
     updateVisualizer() {
         if (!this.analyser) return;
-        
+
         // Get audio data
         this.analyser.getByteFrequencyData(this.dataArray);
         const time = Date.now() * 0.0001;
@@ -827,7 +849,7 @@ class Visualizer {
         let highFreqAvg = 0;
         const lowFreqCutoff = Math.floor(this.dataArray.length / 3);
         const highFreqStart = Math.floor(this.dataArray.length * 2 / 3);
-        for(let i = 0; i < this.dataArray.length; i++) {
+        for (let i = 0; i < this.dataArray.length; i++) {
             const level = this.dataArray[i] / 255.0;
             averageLevel += level;
             if (i < lowFreqCutoff) { lowFreqAvg += level; }
@@ -848,7 +870,7 @@ class Visualizer {
         }
 
         // Update the active visualizer
-        switch(this.currentStyle) {
+        switch (this.currentStyle) {
             case 'bars':
                 this.updateBars();
                 break;
@@ -869,7 +891,8 @@ class Visualizer {
     /**
      * Update the bars visualizer
      * Adjusts bar heights and colors based on audio frequencies
-     */
+    */
+
     updateBars() {
         for (let i = 0; i < this.bars.length; i++) {
             const value = this.dataArray[i] / 255;
@@ -884,7 +907,8 @@ class Visualizer {
     /**
      * Update the points visualizer
      * Animates points based on audio and time
-     */
+    */
+
     updatePointsVisualizer(delta) {
         if (!this.pointsMesh) return;
 
@@ -893,7 +917,7 @@ class Visualizer {
 
         // Calculate average audio level
         let averageLevel = 0;
-        for(let i = 0; i < this.dataArray.length; i++) {
+        for (let i = 0; i < this.dataArray.length; i++) {
             averageLevel += this.dataArray[i] / 255.0;
         }
         averageLevel /= this.dataArray.length;
@@ -909,18 +933,19 @@ class Visualizer {
         const time = this.clock.getElapsedTime();
         const radius = 100 + Math.sin(time * 0.5) * 20;
         const angle = time * 0.2;
-        
+
         this.camera.position.x = Math.sin(angle) * radius;
         this.camera.position.z = Math.cos(angle) * radius;
         this.camera.position.y = Math.sin(time * 0.3) * 30;
-        
+
         this.camera.lookAt(0, 0, 0);
     }
 
     /**
      * Update the wave visualizer
      * Animates wave patterns based on audio and time
-     */
+    */
+
     updateWaveVisualizer(delta) {
         if (!this.waveMesh1 || !this.waveMesh2) return;
 
@@ -929,7 +954,7 @@ class Visualizer {
 
         // Calculate average audio level
         let averageLevel = 0;
-        for(let i = 0; i < this.dataArray.length; i++) {
+        for (let i = 0; i < this.dataArray.length; i++) {
             averageLevel += this.dataArray[i] / 255.0;
         }
         averageLevel /= this.dataArray.length;
@@ -944,7 +969,7 @@ class Visualizer {
         const colors2 = this.waveGeometry2.attributes.color.array;
         const hue1 = (averageLevel * 0.5) % 1.0;
         const hue2 = (hue1 + 0.5) % 1.0;
-        
+
         for (let i = 0; i < positions1.length; i += 3) {
             // Update first layer colors
             const height1 = positions1[i + 2];
@@ -957,7 +982,7 @@ class Visualizer {
             colors1[i] = color1.r;
             colors1[i + 1] = color1.g;
             colors1[i + 2] = color1.b;
-            
+
             // Update second layer colors
             const height2 = positions2[i + 2];
             const normalizedHeight2 = (height2 + 5) / 10;
@@ -970,32 +995,32 @@ class Visualizer {
             colors2[i + 1] = color2.g;
             colors2[i + 2] = color2.b;
         }
-        
+
         // Update geometry attributes
         this.waveGeometry1.attributes.color.needsUpdate = true;
         this.waveGeometry2.attributes.color.needsUpdate = true;
 
         // Dynamic camera movement
         const time = this.clock.getElapsedTime();
-        
+
         // Base camera parameters
         const baseHeight = 15;
         const baseDistance = 30;
         const rotationSpeed = 0.2;
         const verticalOscillation = 0.5;
         const oscillationSpeed = 2.0;
-        
+
         // Calculate camera position
         const angle = time * rotationSpeed;
         const verticalOffset = Math.sin(time * oscillationSpeed) * verticalOscillation;
         const audioInfluence = averageLevel * 2.0;
         const radius = baseDistance + Math.sin(time * 0.5) * audioInfluence;
-        
+
         // Update camera position
         this.camera.position.x = Math.sin(angle) * radius;
         this.camera.position.y = baseHeight + verticalOffset + audioInfluence * 0.5;
         this.camera.position.z = Math.cos(angle) * radius;
-        
+
         // Update camera look target
         const lookAtOffset = Math.sin(time * 0.3) * 5;
         this.camera.lookAt(
@@ -1008,10 +1033,11 @@ class Visualizer {
     /**
      * Main animation loop
      * Handles continuous updates and rendering
-     */
+    */
+
     animate() {
         requestAnimationFrame(() => this.animate());
-        
+
         // Update orbit controls if enabled
         if (this.orbitControls && this.orbitControls.enabled) {
             this.orbitControls.update();
@@ -1025,7 +1051,9 @@ class Visualizer {
     }
 }
 
+export { Visualizer };
+
 // Initialize the visualizer when the page loads
-window.addEventListener('load', () => {
-    new Visualizer();
-}); 
+// window.addEventListener('load', () => {
+//     new Visualizer();
+// });

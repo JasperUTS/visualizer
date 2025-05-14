@@ -1,58 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Media Visualiser</title>
-    <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Music Visualiser</title>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.161.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.161.0/examples/jsm/",
+          "rgbeloader": "https://unpkg.com/three@0.161.0/examples/jsm/loaders/"
+        }
+      }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r161/examples/jsm/controls/OrbitControls.min.js"></script>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="shortcut icon" href="#">
+    <script src="visualizer.js" type="module"></script>
+    <script src="app.js" type="module"></script> 
   </head>
 
   <body>
-    <div id="registration-container">
-      <h2>Register</h2>
-      <label for="register-username">Username:</label>
-      <input type="text" id="register-username" required><br><br>
-      <label for="register-password">Password:</label>
-      <input type="password" id="register-password" required><br><br>
-      <button id="register-button">Register</button>
-      <p id="registration-message"></p>
-    </div>
-
-    <div id="login-container">
-      <h2>Login</h2>
-      <label for="login-username">Username:</label>
-      <input type="text" id="login-username" required><br><br>
-      <label for="login-password">Password:</label>
-      <input type="password" id="login-password" required><br><br>
-      <button id="login-button">Login</button>
-      <p id="login-message"></p>
-    </div>
+    <div id="auth-container"></div>
 
     <div id="app-container" style="display: none;">
-      <h1>Welcome, <span id="logged-in-user"></span>!</h1>
-      <button id="logout-button">Logout</button>
+      
+      <button id="logout-button" onclick="logoutUser()">Logout</button>
 
-      <h2>Playlists</h2>
-      <div id="playlist-management">
-        <input type="text" id="new-playlist-name" placeholder="New playlist name">
-        <button id="create-playlist-button">Create Playlist</button>
-        <ul id="playlist-list">
-        </ul>
+      <div id="media-library"></div>
+        
+      <div id="playlist-container"></div>
+
+      <div id="visualizer-container">
+
+        <div id="canvas-container"></div>
+        
+        <div id="audio-controls">
+          <input type="file" id="audio-input" accept="audio/*" multiple>
+          <button id="play-pause">Play</button>
+          <button id="next">Next</button>
+          <button id="prev">Previous</button>
+          <select id="visualizer-style">
+            <option value="bars">Bars</option>
+            <option value="points">Points</option>
+            <option value="towers">Towers</option>
+            <option value="wave">Wave</option>
+          </select>
+          <div id="progress-bar">
+            <div class="progress"></div>
+            <span id="current-time">0:00</span> / <span id="total-time">0:00</span>
+          </div>
+        </div>
       </div>
-
-      <h2>Media Library</h2>
-      <p>Place your media files (audio and video) in the <code>media</code> folder within the project directory.</p>
-      <ul id="media-list">
-      </ul>
-
-      <h2>Current Playlist</h2>
-      <ul id="current-playlist-items">
-      </ul>
-      <button id="play-playlist-button" disabled>Play Playlist</button>
-
     </div>
-
-    <script src="script.js"></script>
 
   </body>
 </html>
